@@ -1,7 +1,9 @@
 import json
 from typing import Optional, Dict
 from openai import OpenAI
+from datetime import datetime
 from infrastructure.env_loader import get_openai_api_key
+from domain.prompts import get_parse_appointment_prompt, get_confirmation_message_prompt
 
 
 class OpenAIClient:
@@ -17,17 +19,7 @@ class OpenAIClient:
     
     def parse_appointment(self, text: str) -> Optional[Dict]:
         try:
-            prompt = f"""Você é um assistente que extrai informações de agendamento de consultas.
-Analise o texto do usuário e retorne APENAS um JSON com os seguintes campos:
-- paciente: nome do paciente
-- data: data no formato YYYY-MM-DD (se for "amanhã", "hoje", etc., calcule a data)
-- hora: horário no formato HH:MM
-
-Se não conseguir extrair alguma informação, retorne null para aquele campo.
-
-Texto do usuário: "{text}"
-
-Retorne APENAS o JSON, sem explicações."""
+            prompt = get_parse_appointment_prompt(text)
 
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
@@ -58,28 +50,12 @@ Retorne APENAS o JSON, sem explicações."""
         time_: str
     ) -> str:
         try:
-            from datetime import datetime
             date_obj = datetime.strptime(date, "%Y-%m-%d")
             date_formatted = date_obj.strftime("%d/%m/%Y")
             
-            prompt = f"""Gere uma mensagem de confirmação cordial e profissional para um agendamento de consulta.
-
-Informações:
-- Paciente: {patient_name}
-- Data: {date_formatted}
-- Horário: {time_}
-- Médico: Dr. Carlos
-- Especialidade: Clínico Geral
-
-A mensagem deve:
-- Ser amigável e profissional
-- Mencionar o nome do paciente
-- Incluir data e horário
-- Mencionar o Dr. Carlos
-- Pedir para chegar com 10 minutos de antecedência
-- Ser breve (2-3 frases)
-
-Retorne APENAS a mensagem, sem aspas ou formatação extra."""
+            prompt = get_confirmation_message_prompt(
+                patient_name, date_formatted, time_
+            )
 
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
