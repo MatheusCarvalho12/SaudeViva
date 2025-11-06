@@ -1,6 +1,8 @@
 import json
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Union
 from openai import OpenAI, APIError
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
+from openai.types.chat.completion_create_params import ResponseFormat
 from datetime import datetime
 from infrastructure.env_loader import get_openai_api_key
 from domain.prompts import get_parse_appointment_prompt, get_confirmation_message_prompt
@@ -21,13 +23,16 @@ class OpenAIClient:
         try:
             prompt = get_parse_appointment_prompt(text)
 
+            messages: List[Union[ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam]] = [
+                {"role": "system", "content": "Você é um assistente que retorna apenas JSON válido."},
+                {"role": "user", "content": prompt}
+            ]
+            response_format: ResponseFormat = {"type": "json_object"}
+
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "Você é um assistente que retorna apenas JSON válido."},
-                    {"role": "user", "content": prompt}
-                ],
-                response_format={"type": "json_object"},
+                messages=messages,
+                response_format=response_format,
                 temperature=0.3
             )
             
@@ -57,12 +62,14 @@ class OpenAIClient:
                 patient_name, date_formatted, time_
             )
 
+            messages: List[Union[ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam]] = [
+                {"role": "system", "content": "Você é um assistente amigável de uma clínica médica."},
+                {"role": "user", "content": prompt}
+            ]
+
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "Você é um assistente amigável de uma clínica médica."},
-                    {"role": "user", "content": prompt}
-                ],
+                messages=messages,
                 temperature=0.7,
                 max_tokens=150
             )
