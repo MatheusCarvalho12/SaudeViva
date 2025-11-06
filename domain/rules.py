@@ -54,7 +54,7 @@ def has_conflict(new_date: str, new_time: str, existing_appointments: list) -> b
             existing_duration = apt.get("duration_minutes", DEFAULT_DURATION_MINUTES)
             existing_end = existing_start + timedelta(minutes=existing_duration)
             
-            if (new_start < existing_end and new_end > existing_start):
+            if new_start < existing_end and new_end > existing_start:
                 return True
         
         return False

@@ -1,6 +1,6 @@
 import json
 from typing import Optional, Dict
-from openai import OpenAI
+from openai import OpenAI, APIError
 from datetime import datetime
 from infrastructure.env_loader import get_openai_api_key
 from domain.prompts import get_parse_appointment_prompt, get_confirmation_message_prompt
@@ -39,7 +39,7 @@ class OpenAIClient:
             
             return data
             
-        except Exception as e:
+        except (APIError, json.JSONDecodeError) as e:
             print(f"Erro ao interpretar linguagem natural: {e}")
             return None
     
@@ -71,8 +71,7 @@ class OpenAIClient:
             message = message.strip('"').strip("'")
             return message
             
-        except Exception as e:
-            from datetime import datetime
+        except APIError:
             date_obj = datetime.strptime(date, "%Y-%m-%d")
             date_formatted = date_obj.strftime("%d/%m/%Y")
             

@@ -1,5 +1,6 @@
 import sys
 from datetime import datetime
+from openai import APIError
 
 from infrastructure.env_loader import load_environment
 from infrastructure.json_repository import JsonAppointmentRepository
@@ -36,7 +37,7 @@ def format_date(date_str: str) -> str:
     try:
         date_obj = datetime.strptime(date_str, "%Y-%m-%d")
         return date_obj.strftime("%d/%m/%Y")
-    except:
+    except ValueError:
         return date_str
 
 
@@ -71,7 +72,7 @@ def handle_schedule_appointment(
             appointment.time
         )
         print(f"\n{message}")
-    except Exception as e:
+    except APIError as e:
         print(f"\n⚠️  Não foi possível gerar a mensagem de confirmação: {e}")
         print(f"Consulta agendada para {format_date(date)} às {time}.")
 
@@ -175,7 +176,7 @@ def handle_schedule_from_natural(
             appointment.time
         )
         print(f"\n{message}")
-    except Exception as e:
+    except APIError as e:
         print(f"\n⚠️  Não foi possível gerar a mensagem de confirmação: {e}")
 
 
